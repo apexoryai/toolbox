@@ -1,0 +1,38 @@
+sources:
+  my-pg-source:
+    kind: postgres
+    host: ${POSTGRES_HOST}
+    port: ${POSTGRES_PORT}
+    database: ${POSTGRES_DATABASE}
+    user: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+tools:
+  list-tables:
+    kind: postgres-sql
+    source: my-pg-source
+    description: List all tables in the database.
+    parameters: []
+    statement: SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;
+  describe-table:
+    kind: postgres-sql
+    source: my-pg-source
+    description: Describe the structure of a specific table.
+    parameters:
+      - name: table_name
+        type: string
+        description: The name of the table to describe.
+    statement: SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 ORDER BY ordinal_position;
+  execute-sql:
+    kind: postgres-sql
+    source: my-pg-source
+    description: Execute any SQL statement, including DDL (for admin use only).
+    parameters:
+      - name: sql
+        type: string
+        description: The SQL statement to execute.
+    statement: "{sql}"
+toolsets:
+  db-admin:
+    - list-tables
+    - describe-table
+    - execute-sql 

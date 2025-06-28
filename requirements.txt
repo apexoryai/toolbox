@@ -1,0 +1,4 @@
+langchain-google-genai>=2.1.5
+# Compatible with langchain-google-genai
+google-ai-generativelanguage>=0.6.18,<0.7.0
+toolbox-core>=0.2.1 

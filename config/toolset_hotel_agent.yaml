@@ -1,0 +1,87 @@
+sources:
+  my-pg-source:
+    kind: postgres
+    host: ${POSTGRES_HOST}
+    port: ${POSTGRES_PORT}
+    database: ${POSTGRES_DATABASE}
+    user: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+tools:
+  list-hotels:
+    kind: postgres-sql
+    source: my-pg-source
+    description: "List all hotels with their tier."
+    parameters: []
+    statement: |
+      SELECT h.id, h.name, h.location, t.tier_name, t.cost
+      FROM hotels h
+      LEFT JOIN hotel_tier t ON h.hotel_tier_id = t.id;
+  search-hotels-by-name:
+    kind: postgres-sql
+    source: my-pg-source
+    description: Search for hotels based on name.
+    parameters:
+      - name: name
+        type: string
+        description: The name of the hotel.
+    statement: SELECT * FROM hotels WHERE name ILIKE '%' || $1 || '%';
+  search-hotels-by-location:
+    kind: postgres-sql
+    source: my-pg-source
+    description: Search for hotels based on location.
+    parameters:
+      - name: location
+        type: string
+        description: The location of the hotel.
+    statement: SELECT * FROM hotels WHERE location ILIKE '%' || $1 || '%';
+  list-hotel-tiers:
+    kind: postgres-sql
+    source: my-pg-source
+    description: List all hotel tiers and their costs.
+    parameters: []
+    statement: SELECT * FROM hotel_tier;
+  get-hotel-tier-by-id:
+    kind: postgres-sql
+    source: my-pg-source
+    description: Get hotel tier details by id.
+    parameters:
+      - name: id
+        type: integer
+        description: The id of the hotel tier.
+    statement: SELECT * FROM hotel_tier WHERE id = $1;
+  list-bookings:
+    kind: postgres-sql
+    source: my-pg-source
+    description: List all bookings with hotel info.
+    parameters: []
+    statement: |
+      SELECT b.id, h.name AS hotel_name, h.location, t.tier_name, t.cost, b.checkin_date, b.checkout_date
+      FROM bookings b
+      LEFT JOIN hotels h ON b.hotel_id = h.id
+      LEFT JOIN hotel_tier t ON h.hotel_tier_id = t.id;
+  create-booking:
+    kind: postgres-sql
+    source: my-pg-source
+    description: Create a new booking for a hotel.
+    parameters:
+      - name: hotel_id
+        type: integer
+        description: The ID of the hotel to book.
+      - name: checkin_date
+        type: string
+        description: Check-in date (YYYY-MM-DD).
+      - name: checkout_date
+        type: string
+        description: Check-out date (YYYY-MM-DD).
+    statement: |
+      INSERT INTO bookings (hotel_id, checkin_date, checkout_date)
+      VALUES ($1, $2, $3);
+toolsets:
+  hotel-agent:
+    - list-hotels
+    - search-hotels-by-name
+    - search-hotels-by-location
+    - list-hotel-tiers
+    - get-hotel-tier-by-id
+    - list-bookings
+    - create-booking 

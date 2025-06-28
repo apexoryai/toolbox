@@ -1,0 +1,21 @@
+## Populate variables, rename this file to mcp.json, and move this file to folder <root of project>/.cursor
+
+{{
+  "mcpServers": {
+    "postgres": {
+      "command": "<<full-path>>/full-path>>>/toolbox/bin/toolbox",
+      "args": [
+        "--tools-file",
+        "<<full-path>>/toolbox/config/tools.yaml",
+        "--stdio"
+      ],
+      "env": {
+        "POSTGRES_HOST": "127.0.0.1",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_DATABASE": "toolbox_db",
+        "POSTGRES_USER": "toolboxuser",
+        "POSTGRES_PASSWORD": "my-password"
+      }
+    }
+  }
+}
