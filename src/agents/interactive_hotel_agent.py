@@ -2,6 +2,7 @@
 
 import asyncio
 from dotenv import load_dotenv
+import requests
 
 from langgraph.prebuilt import create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -98,11 +99,24 @@ async def interactive_hotel_agent():
             
             print("\n🤖 Processing your request...")
             
-            # Process the query with the agent
-            inputs = {"messages": [("user", HOTEL_PROMPT + user_query)]}
+            # Always fetch the current date from the time_server
             try:
-                # Use a standard, non-streaming invoke for robustness
+                resp = requests.get("http://127.0.0.1:8080/current_time")  # Adjust port if needed
+                resp.raise_for_status()
+                current_date = resp.json()['datetime'][:10]  # 'YYYY-MM-DD'
+            except Exception as e:
+                print(f"❌ Could not fetch current date from time_server: {e}")
+                continue
+
+            # Process the query with the agent, always providing current_date
+            inputs = {
+                "messages": [("user", HOTEL_PROMPT + user_query)],
+                "parameters": {"current_date": current_date}
+            }
+            try:
+                print(f"Calling agent with parameters: {inputs['parameters']}")
                 response = agent.invoke(inputs, config=config)
+                print("Agent call complete")
                 
                 print("\n💬 Assistant:")
                 if response and "messages" in response:

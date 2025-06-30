@@ -11,7 +11,7 @@ config:
   layout: dagre
   flowchart:
     handDrawn: true
-    curve: stepBefore
+    curve: basis
     htmlLabels: false
 ---
 flowchart TD
@@ -89,7 +89,7 @@ config:
   layout: dagre
   flowchart:
     handDrawn: true
-    curve: stepBefore
+    curve: basis
     htmlLabels: false
 ---
 flowchart TD
@@ -113,6 +113,9 @@ flowchart TD
     T2["🔧 hotel_agent<br/>toolbox<br/>(MCP Server, Port 5052)"]
     T2Conf["📋 tools_hotel_agent.yaml"]
   end
+  subgraph "⏰ Time Server (MCP)"
+    TIME_HTTP["⏰ time_server<br/>HTTP MCP Server"]
+  end
   subgraph "🗄️ DB"
     DB["🐘 PostgreSQL"]
     TableHotels["🏨 hotels<br/>table"]
@@ -123,6 +126,8 @@ flowchart TD
   A1 -.->|"Loads config"| A3
   A2 -.->|"Uses SDK"| SDK
   SDK <--> |"MCP/HTTP"| T2
+  SDK <--> |"MCP/HTTP"| TIME_HTTP
+  A2 -.->|"Uses time_server"| TIME_HTTP
   T2 -->|"Loads"| T2Conf
   T2 -.->|"Executes SQL"| DB
   DB --> TableHotels
@@ -135,11 +140,108 @@ flowchart TD
   class Clerk,U1 userStyle
   class A1,A2,A3 appStyle
   class SDK sdkStyle
-  class T2,T2Conf serverStyle
+  class T2,T2Conf,TIME_HTTP serverStyle
   class DB,TableHotels dbStyle
   style A1 stroke-width:7px,stroke-dasharray:6 3,fill:#fffde7
   style DB stroke-width:7px,fill:#e3ffe6
 ```
+
+## MCP Server Modes and Management
+
+The Hotel Management Toolbox supports both STDIO and HTTP modes for its MCP servers, depending on the use case:
+
+- **db_admin**
+  - STDIO mode (port 5051): Managed by Cursor for IDE integration.
+  - HTTP mode (port 5054): For Python agents, Swagger UI, and direct HTTP access.
+- **hotel_agent**
+  - STDIO mode (port 5052): Managed by Cursor for IDE integration.
+  - HTTP mode (port 5053): For Python agents, Swagger UI, and direct HTTP access.
+- **time_server**
+  - HTTP mode only (default port, varies): Used by both Cursor and Python agents. Does not support STDIO/MCP protocol.
+
+### MCP Server Summary Table
+
+| Server        | Port  | Mode   | Managed By         |
+|---------------|-------|--------|--------------------|
+| db_admin      | 5051  | STDIO  | Cursor             |
+| db_admin      | 5054  | HTTP   | User/Script        |
+| hotel_agent   | 5052  | STDIO  | Cursor             |
+| hotel_agent   | 5053  | HTTP   | User/Script        |
+| time_server   | varies| HTTP   | User/Script/Cursor |
+
+- **Note:** Only one mode (STDIO or HTTP) is supported per process. To support both, run two instances on different ports.
+- **time_server** is HTTP-only and does not support STDIO/MCP protocol.
+
+#### Detailed MCP Server Mode Diagram
+
+```mermaid
+---
+title: MCP Server Mode
+config:
+  layout: dagre
+  flowchart:
+    handDrawn: true
+    curve: basis
+    htmlLabels: false
+---
+flowchart TD
+  subgraph "👥 Users"
+    DBA["🛡️ DB Admins"]
+    Clerk["🏨 Hotel Clerks"]
+    Cursor["💻 Cursor IDE<br/>MCP Client"]
+    Py["🐍 Python/CLI"]
+  end
+
+  subgraph "🛠️ MCP Servers"
+    DB_STDIO["🔧 db_admin<br/>STDIO<br/>Port 5051"]
+    DB_HTTP["🔧 db_admin<br/>HTTP<br/>Port 5054"]
+    HA_STDIO["🏨 hotel_agent<br/>STDIO<br/>Port 5052"]
+    HA_HTTP["🏨 hotel_agent<br/>HTTP<br/>Port 5053"]
+    TIME_HTTP["⏰ time_server<br/>HTTP<br/>(varies)"]
+  end
+
+  subgraph "🗄️ DB"
+    DB["🐘 PostgreSQL"]
+  end
+
+  %% Connections
+  DBA -.->|Uses| Cursor
+  Clerk -.->|Uses| Cursor
+  DBA -.->|Uses| Py
+  Clerk -.->|Uses| Py
+
+  Cursor -- "STDIO (5051)" --> DB_STDIO
+  Cursor -- "STDIO (5052)" --> HA_STDIO
+
+  Py -- "HTTP (5054)" --> DB_HTTP
+  Py -- "HTTP (5053)" --> HA_HTTP
+
+  Cursor -- "HTTP (varies)" --> TIME_HTTP
+  Py -- "HTTP (varies)" --> TIME_HTTP
+
+  DB_STDIO -.->|SQL| DB
+  DB_HTTP -.->|SQL| DB
+  HA_STDIO -.->|SQL| DB
+  HA_HTTP -.->|SQL| DB
+
+  %% Styles
+  classDef stdio fill:#e3f2fd,stroke:#1976d2,stroke-width:2px;
+  classDef http fill:#c8e6c9,stroke:#388e3c,stroke-width:2px;
+  class DB_STDIO,HA_STDIO stdio
+  class DB_HTTP,HA_HTTP,TIME_HTTP http
+```
+
+This diagram shows the dual-mode setup, shared source code, and all user/server connections.
+
+### Viewing Running MCP Servers
+
+You can use the `scripts/tools/list_mcp_servers.sh` script to view all running MCP servers, their ports, modes, and PIDs:
+
+```bash
+bash scripts/tools/list_mcp_servers.sh
+```
+
+This will print a table showing which servers are running, their connection mode, and their process IDs.
 
 ## Architecture Overview
 

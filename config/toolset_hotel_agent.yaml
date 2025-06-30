@@ -112,7 +112,10 @@ tools:
     kind: postgres-sql
     source: my-pg-source
     description: Get upcoming bookings within the next 30 days.
-    parameters: []
+    parameters:
+      - name: current_date
+        type: string
+        description: The current date (YYYY-MM-DD), to be provided by the time server.
     statement: |
       SELECT 
         b.id,
@@ -122,12 +125,12 @@ tools:
         t.cost,
         b.checkin_date,
         b.checkout_date,
-        (b.checkin_date - CURRENT_DATE) as days_until_checkin
+        (b.checkin_date - $1::date) as days_until_checkin
       FROM bookings b
       LEFT JOIN hotels h ON b.hotel_id = h.id
       LEFT JOIN hotel_tier t ON h.hotel_tier_id = t.id
-      WHERE b.checkin_date >= CURRENT_DATE 
-        AND b.checkin_date <= CURRENT_DATE + INTERVAL '30 days'
+      WHERE b.checkin_date >= $1::date
+        AND b.checkin_date <= $1::date + INTERVAL '30 days'
       ORDER BY b.checkin_date;
 toolsets:
   hotel-agent:

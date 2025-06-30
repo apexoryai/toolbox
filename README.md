@@ -95,11 +95,37 @@ This project is configured to integrate directly with the Cursor IDE through the
 
 ### MCP Servers
 
-The project includes three MCP servers:
+The project includes three MCP servers, each of which can be run in different modes depending on your workflow:
 
-1. **DB Admin Server** (`db_admin`): Database administration tools
-2. **Hotel Agent Server** (`hotel_agent`): Hotel management tools  
-3. **Time Server** (`time_server`): Time and timezone tools
+| Server        | Port  | Mode   | Managed By         |
+|---------------|-------|--------|--------------------|
+| db_admin      | 5051  | STDIO  | Cursor             |
+| db_admin      | 5054  | HTTP   | User/Script        |
+| hotel_agent   | 5052  | STDIO  | Cursor             |
+| hotel_agent   | 5053  | HTTP   | User/Script        |
+| time_server   | varies| HTTP   | User/Script/Cursor |
+
+- **db_admin**: Database administration tools
+  - STDIO mode (port 5051): Managed by Cursor for IDE integration.
+  - HTTP mode (port 5054): For Python agents, Swagger UI, and direct HTTP access.
+- **hotel_agent**: Hotel management tools
+  - STDIO mode (port 5052): Managed by Cursor for IDE integration.
+  - HTTP mode (port 5053): For Python agents, Swagger UI, and direct HTTP access.
+- **time_server**: Time and timezone tools
+  - HTTP mode only (default port, varies): Used by both Cursor and Python agents. Does not support STDIO/MCP protocol.
+
+> **Note:** Only one mode (STDIO or HTTP) is supported per process. To support both, run two instances on different ports.
+> **time_server** is HTTP-only and does not support STDIO/MCP protocol.
+
+#### Viewing Running MCP Servers
+
+You can use the `scripts/tools/list_mcp_servers.sh` script to view all running MCP servers, their ports, modes, and PIDs:
+
+```bash
+bash scripts/tools/list_mcp_servers.sh
+```
+
+This will print a table showing which servers are running, their connection mode, and their process IDs.
 
 ### Time Server Integration
 
