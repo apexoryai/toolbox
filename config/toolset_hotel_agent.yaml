@@ -76,6 +76,59 @@ tools:
     statement: |
       INSERT INTO bookings (hotel_id, checkin_date, checkout_date)
       VALUES ($1, $2, $3);
+  check-hotel-availability:
+    kind: postgres-sql
+    source: my-pg-source
+    description: Check hotel availability for specific dates.
+    parameters:
+      - name: hotel_id
+        type: integer
+        description: The ID of the hotel to check.
+      - name: checkin_date
+        type: string
+        description: Check-in date (YYYY-MM-DD).
+      - name: checkout_date
+        type: string
+        description: Check-out date (YYYY-MM-DD).
+    statement: |
+      SELECT 
+        h.name as hotel_name,
+        h.location,
+        t.tier_name,
+        t.cost,
+        COUNT(b.id) as existing_bookings,
+        CASE 
+          WHEN COUNT(b.id) = 0 THEN 'Available'
+          ELSE 'Booked'
+        END as availability_status
+      FROM hotels h
+      LEFT JOIN hotel_tier t ON h.hotel_tier_id = t.id
+      LEFT JOIN bookings b ON h.id = b.hotel_id 
+        AND b.checkin_date < $3 
+        AND b.checkout_date > $2
+      WHERE h.id = $1
+      GROUP BY h.id, h.name, h.location, t.tier_name, t.cost;
+  get-upcoming-bookings:
+    kind: postgres-sql
+    source: my-pg-source
+    description: Get upcoming bookings within the next 30 days.
+    parameters: []
+    statement: |
+      SELECT 
+        b.id,
+        h.name AS hotel_name,
+        h.location,
+        t.tier_name,
+        t.cost,
+        b.checkin_date,
+        b.checkout_date,
+        (b.checkin_date - CURRENT_DATE) as days_until_checkin
+      FROM bookings b
+      LEFT JOIN hotels h ON b.hotel_id = h.id
+      LEFT JOIN hotel_tier t ON h.hotel_tier_id = t.id
+      WHERE b.checkin_date >= CURRENT_DATE 
+        AND b.checkin_date <= CURRENT_DATE + INTERVAL '30 days'
+      ORDER BY b.checkin_date;
 toolsets:
   hotel-agent:
     - list-hotels
@@ -84,4 +137,6 @@ toolsets:
     - list-hotel-tiers
     - get-hotel-tier-by-id
     - list-bookings
-    - create-booking 
+    - create-booking
+    - check-hotel-availability
+    - get-upcoming-bookings 

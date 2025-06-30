@@ -58,6 +58,7 @@ toolbox/
 │   ├── core/
 │   └── utils/
 │       ├── config.py
+│       ├── time_utils.py                   # Time utility functions
 │       └── __init__.py
 ├── config/
 │   ├── toolset_db_admin.yaml               # Toolset for DB admin tools
@@ -78,7 +79,9 @@ toolbox/
 │       └── start_toolbox.sh
 ├── examples/
 │   ├── demo_interactive.py
-│   └── interactive_tool_test.py
+│   ├── interactive_tool_test.py
+│   ├── test_time_utils.py                  # Time utility tests
+│   └── test_mcp_time_integration.py        # MCP time server tests
 ├── docs/
 │   └── architecture.md
 ├── main.py
@@ -90,8 +93,35 @@ toolbox/
 
 This project is configured to integrate directly with the Cursor IDE through the Model Context Protocol (MCP), allowing you to use the defined tools right in the chat.
 
+### MCP Servers
+
+The project includes three MCP servers:
+
+1. **DB Admin Server** (`db_admin`): Database administration tools
+2. **Hotel Agent Server** (`hotel_agent`): Hotel management tools  
+3. **Time Server** (`time_server`): Time and timezone tools
+
+### Time Server Integration
+
+The MCP time server provides timezone-aware functionality:
+
+- **Current Time**: Get current time in any timezone
+- **Time Conversion**: Convert times between different timezones
+- **Timezone Support**: Uses IANA timezone identifiers (e.g., `America/Denver` for MDT)
+
+**Available Tools:**
+- `get_current_time`: Get current time in specified timezone
+- `convert_time`: Convert time between timezones
+
+**Configuration:**
+- **Local Timezone**: Set to `America/Denver` (Mountain Daylight Time)
+- **Server**: Automatically managed by Cursor IDE
+- **Integration**: Seamlessly available alongside database tools
+
+### Configuration
+
 - **Configuration**: The integration is defined in the `.cursor/mcp.json` file.
-- **Automatic Server Management**: You do **not** need to run `./scripts/tools/start_toolbox.sh` for the integration to work in Cursor. Cursor automatically starts and manages its own instance of the `toolbox` server in the background.
+- **Automatic Server Management**: You do **not** need to run `./scripts/tools/start_toolbox.sh` for the integration to work in Cursor. Cursor automatically starts and manages its own instance of the servers in the background.
 - **Key Requirement**: The configuration in `.cursor/mcp.json` **must use absolute paths** for both the `toolbox` executable and the toolset YAML file. This is because Cursor does not run the server from the project's root directory.
 
 To enable the tools, simply open the "Tools & Integrations" settings in Cursor and toggle the `postgres` tool on.
@@ -142,6 +172,12 @@ python examples/interactive_tool_test.py
 
 # Agent connectivity test
 python src/agents/tests/test_agent_connectivity.py
+
+# Test time utilities
+python examples/test_time_utils.py
+
+# Test MCP time server integration
+python examples/test_mcp_time_integration.py
 ```
 
 ## 🔧 Configuration
@@ -173,20 +209,30 @@ The `config/toolset_db_admin.yaml` and `config/toolset_hotel_agent.yaml` files d
 - `toolset_db_admin.yaml`: Tools for database administration (list-tables, describe-table, execute-sql)
 - `toolset_hotel_agent.yaml`: Tools for hotel management (list-hotels, bookings, etc.)
 
+### Time Server Configuration
+
+The MCP time server is configured with:
+- **Local Timezone**: `America/Denver` (Mountain Daylight Time)
+- **Server Type**: stdio-based MCP server
+- **Integration**: Automatically available in Cursor IDE
+
 ## 🏗️ Architecture
 
 The system follows a modular architecture:
 
 ```
 User Interface (CLI/Python) → AI Agents → Toolbox Server → PostgreSQL Database
+                                    ↓
+                              MCP Time Server
 ```
 
 ### Components
 
 1. **AI Agents** (`src/agents/`): Intelligent interfaces using Google AI
 2. **Toolbox Server**: HTTP API server providing tool access
-3. **Database**: PostgreSQL with hotel and booking data
-4. **Configuration**: Centralized config management (`src/utils/config.py`)
+3. **MCP Time Server**: Timezone-aware time operations
+4. **Database**: PostgreSQL with hotel and booking data
+5. **Configuration**: Centralized config management (`src/utils/config.py`)
 
 ## 🧪 Testing
 
@@ -199,18 +245,15 @@ This script allows you to have a full, interactive conversation with the AI hote
 python examples/demo_interactive.py
 ```
 
-### Interactive Tool Tester
-This script is for developers. It allows you to connect directly to the toolbox server and test each tool individually without an AI in the loop. This is useful for debugging tool definitions in the toolset YAML files.
+### Time Server Testing
+Test the MCP time server integration:
 
 ```bash
-python examples/interactive_tool_test.py
-```
+# Test time utilities
+python examples/test_time_utils.py
 
-### Agent Connectivity Test
-This script checks if the agent can connect to the toolbox server and AI model.
-
-```bash
-python src/agents/tests/test_agent_connectivity.py
+# Test MCP time server integration
+python examples/test_mcp_time_integration.py
 ```
 
 ## 🔄 Development
