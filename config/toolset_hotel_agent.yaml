@@ -6,6 +6,9 @@ sources:
     database: ${POSTGRES_DATABASE}
     user: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
+  textract-http:
+    kind: http
+    baseUrl: http://127.0.0.1:8000
 tools:
   list-hotels:
     kind: postgres-sql
@@ -132,6 +135,12 @@ tools:
       WHERE b.checkin_date >= $1::date
         AND b.checkin_date <= $1::date + INTERVAL '30 days'
       ORDER BY b.checkin_date;
+  extract-text:
+    kind: http
+    source: textract-http
+    description: Extract text from a document using AWS Textract via HTTP.
+    method: POST
+    path: /extract-text
 toolsets:
   hotel-agent:
     - list-hotels
@@ -142,4 +151,5 @@ toolsets:
     - list-bookings
     - create-booking
     - check-hotel-availability
-    - get-upcoming-bookings 
+    - get-upcoming-bookings
+    - extract-text 

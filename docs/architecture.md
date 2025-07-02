@@ -258,7 +258,8 @@ The Hotel Management Toolbox follows a modular architecture with clear separatio
 - **main.py**: Central entry point providing easy access to all system components
 - **src/agents/**: AI-powered agents for hotel management operations
 - **src/utils/config.py**: Centralized configuration management
-- **examples/**: Test scripts and usage examples
+- **examples/**: Usage demos and how-to scripts
+- **tests/**: Automated, assertion-based tests
 
 ### Toolbox Server Layer
 - **db_admin toolbox server**: Exposes only DBA tools (list-tables, describe-table, execute-sql)
@@ -299,4 +300,9 @@ The Hotel Management Toolbox follows a modular architecture with clear separatio
 | App Layer/Agent          | Yes       | Interprets user queries, reasons, formats    | All (via LLM)          |
 | Cursor IDE               | No*       | Sends tool requests, displays results        | All (via MCP servers)  |
 
-*Cursor can use an LLM for chat, but not for tool execution unless you wire it up that way. 
+*Cursor can use an LLM for chat, but not for tool execution unless you wire it up that way.
+
+### Project Directory Structure
+
+- **examples/**: Usage demos and "how-to" scripts. These scripts demonstrate how to use the system, tools, or APIs interactively. They are not intended for automated testing or CI.
+- **tests/**: Automated, assertion-based test scripts. These scripts verify correctness and are typically run as part of CI/CD. They may use frameworks like pytest or unittest. 

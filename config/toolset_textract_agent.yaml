@@ -1,0 +1,14 @@
+sources:
+  textract-http:
+    kind: http
+    baseUrl: http://127.0.0.1:8000  # Change this to your local server's address/port 
+tools:
+  extract-text:
+    kind: http
+    source: textract-http
+    description: Extract text from a document using AWS Textract via HTTP.
+    method: POST
+    path: /extract-text
+toolsets:
+  textract-agent:
+    - extract-text 
